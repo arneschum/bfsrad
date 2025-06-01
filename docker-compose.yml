@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgis/postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+      - ./db-init:/docker-entrypoint-initdb.d
+    ports:
+      - "54322:5432"
+
+  pgadmin:
+     image: dpage/pgadmin4
+     environment:
+       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+     ports:
+       - "5050:80"
+     depends_on:
+       - postgres
+
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.27.0
+    restart: unless-stopped
+    depends_on: 
+      - postgres
+    environment:
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD}
+    ports:
+      - "8904:8080"
+    volumes:
+      - ./geoserver-init:/init
+      - ./geoserver-init/plugins:/usr/local/tomcat/webapps/geoserver/WEB-INF/lib
+    entrypoint: ["/bin/bash", "-c", "chmod +x /init/*.sh && /init/setup.sh"]
+
+
+  nodejs:
+    image: node:latest
+    volumes:
+      - ./app:/app  
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    ports:
+      #- "3001:3000"
+      - "3001:5173"
+    depends_on:
+      - geoserver
