@@ -1,3 +1,4 @@
+version: "3.3"
 services:
   postgres:
     image: postgis/postgis
@@ -17,12 +18,12 @@ services:
        PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
        PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
      ports:
-       - "5050:80"
+       - "5051:80"
      depends_on:
        - postgres
 
   geoserver:
-    image: docker.osgeo.org/geoserver:2.27.0
+    image: oscarfonts/geoserver
     restart: unless-stopped
     depends_on: 
       - postgres
@@ -35,7 +36,6 @@ services:
       - ./geoserver-init:/init
       - ./geoserver-init/plugins:/usr/local/tomcat/webapps/geoserver/WEB-INF/lib
     entrypoint: ["/bin/bash", "-c", "chmod +x /init/*.sh && /init/setup.sh"]
-
 
   nodejs:
     image: node:latest
